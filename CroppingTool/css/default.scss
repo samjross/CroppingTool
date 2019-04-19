@@ -1,0 +1,25 @@
+﻿div.page-wrapper {
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1vw;
+
+    > div {
+        width: 48%;
+        background: #f1f1f1;
+        border-radius: 12px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        * {
+            text-align: center;
+        }
+    }
+}

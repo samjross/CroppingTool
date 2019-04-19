@@ -38,7 +38,10 @@
 		if (isFirstActivation) {
 			// TODO: The app was activated and had not been running. Do general startup initialization here.
 			document.addEventListener("visibilitychange", onVisibilityChanged);
-			args.setPromise(WinJS.UI.processAll());
+            args.setPromise(WinJS.UI.processAll().then(() => {
+                errorCropCode();
+                workingCropCode();
+            }));
 		}
 
 		isFirstActivation = false;
