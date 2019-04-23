@@ -86,6 +86,7 @@
     <Content Include="js\lodash.js" />
     <Content Include="js\main.js" />
     <Content Include="js\workingCropCode.js" />
+    <Content Include="js\_worker_pixelProcessor.js" />
     <Content Include="lib\winjs-4.0.1\js\base.js" />
     <Content Include="lib\winjs-4.0.1\js\ui.js" />
     <Content Include="lib\winjs-4.0.1\css\ui-light.css" />

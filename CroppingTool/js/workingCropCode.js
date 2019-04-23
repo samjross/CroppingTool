@@ -12,11 +12,17 @@
             let files = Array.from(ev.dataTransfer.files)
                 .filter(f => f.name.endsWith('.png'));
 
+            const start = new Date();
+            const promises = [];
             for (let file of files) {
                 const name = file.name;
                 const stream = file.msDetachStream();
-                await processImage(stream, name);
+                const p = processImage(stream, name);
+                promises.push(p);
             }
+            await Promise.all(promises);
+            const end = new Date();
+            console.log(end - start);
         }
     }
 
@@ -43,11 +49,11 @@
         encoder.setPixelData(
             pixelFormat,
             alphaMode,
-            calcBounds.rightBound - calcBounds.leftBound,
+            calcBounds.width,
             calcBounds.height,
             dpiX,
             dpiY,
-            calcBounds.pixels
+            calcBounds.bytes
         );
 
         await encoder.flushAsync();
@@ -61,47 +67,25 @@
 
         const bytes = data.detachPixelData();
 
-        const byteChunks = _.chunk(bytes, 4);
-
-        const alphaBytes = byteChunks.map(chunk => chunk[3]);
-
         const width = decoder.pixelWidth;
         const height = decoder.pixelHeight;
 
-        const byteArrayArray = [[]];
-        alphaBytes.forEach(byte => {
-            let lastArray = byteArrayArray[byteArrayArray.length - 1];
-            if (lastArray.length === width) {
-                lastArray = [];
-                byteArrayArray.push(lastArray);
+        return await sendToWorker(bytes, width, height);
+    }
+
+    function sendToWorker(bytes, width, height) {
+        var w = new Worker('js/_worker_pixelProcessor.js');
+        w.postMessage({ bytes, width, height });
+
+        return new Promise((resolve, reject) => {
+            w.onmessage = (event) => {
+                const bytes = event.data.bytes;
+                const width = event.data.width;
+                const height = event.data.height;
+
+                resolve({ bytes, width, height });
             }
-            lastArray.push(byte);
-        });
-
-        let leftBound = width;
-        let rightBound = 0;
-
-        byteArrayArray.forEach(arr => {
-            arr.forEach((byte, index) => {
-                if (byte !== 0) {
-                    leftBound = Math.min(leftBound, index);
-                    rightBound = Math.max(rightBound, index);
-                }
-            });
-        });
-
-        const byteRows = _.chunk(byteChunks, width);
-
-        const newPixels = byteRows.map(arr => {
-            return arr.filter((byte, index) => {
-                return (index >= leftBound) && (index <= rightBound);
-            });
         })
-            .reduce((acc, arr) => acc.concat(arr), [])
-            .reduce((acc, arr) => acc.concat(arr), []);
-
-        return {
-            leftBound, rightBound: rightBound + 1, width, height, pixels: newPixels
-        }
+        
     }
 })();
